@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <!-- 禁止用戶縮放 -->
+    <title>聖誕節小驚喜！</title>
+    <style>
+        body {
+            margin: 0;
+            background: url('https://images.unsplash.com/photo-1608889175853-c6f88217032b') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 將內容向上對齊 */
+            height: 100vh;
+            overflow: hidden;
+        }
+        h1 {
+            margin: 0;
+        }
+        #game-container {
+            position: relative;
+            width: 800px; /* 固定寬度 */
+            height: 600px; /* 固定高度 */
+            overflow: hidden;
+            border: 5px solid transparent;
+            border-image: linear-gradient(to right, red, green) 1; /* 聖誕紅綠邊框 */
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8); /* 背景陰影 */
+            background: rgba(0, 0, 0, 0.2); /* 增強邊界背景的對比 */
+        }
+        .gift {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            cursor: pointer;
+        }
+        #score, #timer, #current-points,#happy {   
+            font-size: 24px;
+            margin: 10px;
+            color: black; /* 修改分數顯示顏色為黑色 */
+        }
+        #info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #start-button {
+            font-size: 24px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        #end-image {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div id="info">
+            <div id="happy">Merry Christmas! 🎄</div>
+            <div id="score">總分數: 0</div>
+            <div id="current-points">道具分數: 0</div>
+            <div id="timer">剩餘時間: 20</div>
+        </div>
+        <button id="start-button">開始！</button>
+        <div id="game-container">
+            <img id="end-image" src="https://i.imgur.com/644YtNj.jpeg" alt="End Image">
+        </div>
+    </div>
+
+    <script>
+        // 獲取遊戲容器和顯示元素
+        const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score');
+        const currentPointsDisplay = document.getElementById('current-points');
+        const timerDisplay = document.getElementById('timer');
+        const startButton = document.getElementById('start-button');
+        const endImage = document.getElementById('end-image');
+
+        let score = 0; // 總分數
+        let currentPoints = 0; // 當前一次點擊的分數
+        let timeLeft = 5; // 遊戲時間 5 秒
+        let giftInterval;
+        let timerInterval;
+
+        // 隨機生成禮物
+        function createGift() {
+            const gift = document.createElement('div'); // 創建禮物元素
+            gift.classList.add('gift');
+            
+            // 隨機選擇聖誕物品
+            const items = [
+                'https://cdn-icons-png.flaticon.com/128/18604/18604438.png', 
+                'https://cdn-icons-png.flaticon.com/128/18604/18604441.png',   
+                'https://cdn-icons-png.flaticon.com/128/18604/18604443.png', 
+                'https://cdn-icons-png.flaticon.com/128/18604/18604455.png', 
+                'https://cdn-icons-png.flaticon.com/128/18604/18604439.png', 
+                'https://cdn-icons-png.flaticon.com/128/18604/18604450.png'  
+            ];
+            const randomItem = items[Math.floor(Math.random() * items.length)]; // 隨機選擇圖片
+            gift.style.backgroundImage = `url('${randomItem}')`;
+            gift.style.top = Math.random() * (gameContainer.clientHeight - 50) + 'px'; // 隨機垂直位置
+            gift.style.left = Math.random() * (gameContainer.clientWidth - 50) + 'px'; // 隨機水平位置
+
+            // 檢查禮物是否超出邊界，進行調整
+            const maxTop = gameContainer.clientHeight - 50;
+            const maxLeft = gameContainer.clientWidth - 50;
+            if (parseFloat(gift.style.top) < 0) gift.style.top = '0px';
+            if (parseFloat(gift.style.left) < 0) gift.style.left = '0px';
+            if (parseFloat(gift.style.top) > maxTop) gift.style.top = `${maxTop}px`;
+            if (parseFloat(gift.style.left) > maxLeft) gift.style.left = `${maxLeft}px`;
+
+            // 點擊禮物的事件處理
+            gift.addEventListener('click', () => {
+                const points = Math.floor(Math.random() * 10) + 1; // 獲得隨機分數 (1-10)
+                score += points;
+                currentPoints = points;
+                scoreDisplay.textContent = `總分數: ${score}`; // 更新總分數
+                currentPointsDisplay.textContent = `道具分數: ${currentPoints}`; // 更新當前分數
+                gameContainer.removeChild(gift); // 移除已點擊的禮物
+            });
+
+            gameContainer.appendChild(gift); // 將禮物添加到遊戲容器中
+
+            // 2 秒後自動移除禮物
+            setTimeout(() => {
+                if (gameContainer.contains(gift)) {
+                    gameContainer.removeChild(gift);
+                }
+            }, 2000);
+        }
+
+        // 倒計時函數
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `剩餘時間: ${timeLeft}`; // 更新倒計時
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval); // 停止計時器
+                    clearInterval(giftInterval); // 停止生成禮物
+                    alert(`遊戲結束！您的最終得分是 ${score} 分！`); // 顯示最終分數
+                    alert(`比比最厲害！！`); 
+                    alert(`今年聖誕節好忙！雖然我今天不在你身邊！但比比一直在我心中！`); 
+                    alert(`我愛你！！！聖誕節快樂！！`); 
+                    endImage.style.display = 'block'; // 顯示結束圖片
+                    startButton.style.display = 'block'; // 顯示開始按鈕
+                }
+            }, 1000); // 每秒更新一次
+        }
+
+        // 開始遊戲函數
+        function startGame() {
+            startButton.style.display = 'none'; // 隱藏開始按鈕
+            endImage.style.display = 'none'; // 隱藏結束圖片
+            score = 0;
+            currentPoints = 0;
+            timeLeft = 20;
+            scoreDisplay.textContent = `總分數: ${score}`;
+            currentPointsDisplay.textContent = `現在分數: ${currentPoints}`;
+            timerDisplay.textContent = `剩餘時間: ${timeLeft}`;
+            startTimer(); // 開始計時器
+            giftInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    createGift(); // 創建禮物
+                }
+            }, 800); // 每 800 毫秒創建一個禮物
+        }
+
+        // 綁定按鈕點擊事件
+        startButton.addEventListener('click', startGame);
+    </script>
+</body>
+</html>
